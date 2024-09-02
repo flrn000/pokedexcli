@@ -1,8 +1,8 @@
-package main
+package utils
 
 import "strings"
 
-func normalizeInput(text string) string {
+func NormalizeInput(text string) string {
 	output := strings.TrimSpace(text)
 	output = strings.ToLower(output)
 	return output
