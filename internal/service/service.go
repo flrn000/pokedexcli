@@ -1,12 +1,19 @@
 package service
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"time"
+
+	"github.com/flrn000/pokedexcli/internal/cache"
 )
 
 const baseURL = "https://pokeapi.co/api/v2"
+
+var responseCache = cache.NewCache(15 * time.Second)
 
 type Result struct {
 	Name string
@@ -25,6 +32,16 @@ func GetLocationAreaData(pageURL *string) (LocationArea, error) {
 		apiURL = *pageURL
 	}
 
+	if data, exists := responseCache.Get(apiURL); exists {
+		var result LocationArea
+		err := json.Unmarshal(data, &result)
+		if err != nil {
+			return result, fmt.Errorf("error decoding cached data: %v", err)
+		}
+
+		return result, nil
+	}
+
 	res, err := http.Get(apiURL)
 	if err != nil {
 		return LocationArea{}, fmt.Errorf("error fetching maps: %v", err)
@@ -36,8 +53,14 @@ func GetLocationAreaData(pageURL *string) (LocationArea, error) {
 		return LocationArea{}, fmt.Errorf("error: Status %v", res.Status)
 	}
 
+	bodyCopy := bytes.Buffer{}
+	if _, err := io.Copy(&bodyCopy, res.Body); err != nil {
+		return LocationArea{}, err
+	}
+	responseCache.Add(apiURL, bodyCopy.Bytes())
+
 	var data LocationArea
-	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+	if err := json.Unmarshal(bodyCopy.Bytes(), &data); err != nil {
 		return data, fmt.Errorf("error decoding response body: %v", err)
 	}
 
