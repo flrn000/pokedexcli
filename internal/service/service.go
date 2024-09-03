@@ -13,18 +13,7 @@ import (
 
 const baseURL = "https://pokeapi.co/api/v2"
 
-var responseCache = cache.NewCache(15 * time.Second)
-
-type Result struct {
-	Name string
-}
-
-type LocationArea struct {
-	Count    int      `json:"count"`
-	Next     *string  `json:"next"`
-	Previous *string  `json:"previous"`
-	Results  []Result `json:"results"`
-}
+var responseCache = cache.NewCache(2 * time.Minute)
 
 func GetLocationAreaData(pageURL *string) (LocationArea, error) {
 	apiURL := baseURL + "/location-area"
@@ -65,4 +54,41 @@ func GetLocationAreaData(pageURL *string) (LocationArea, error) {
 	}
 
 	return data, nil
+}
+
+func Explore(locationAreaName string) (Encounters, error) {
+	apiURL := baseURL + "/location-area/" + locationAreaName
+
+	if data, exists := responseCache.Get(apiURL); exists {
+		var results Encounters
+		if err := json.Unmarshal(data, &results); err != nil {
+			return Encounters{}, err
+		}
+
+		return results, nil
+	}
+
+	res, err := http.Get(apiURL)
+	if err != nil {
+		return Encounters{}, err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode >= 400 {
+		return Encounters{}, fmt.Errorf("error: Status %v", res.Status)
+	}
+
+	bodyCopy := bytes.Buffer{}
+	if _, err := io.Copy(&bodyCopy, res.Body); err != nil {
+		return Encounters{}, err
+	}
+	responseCache.Add(apiURL, bodyCopy.Bytes())
+
+	var results Encounters
+	if err := json.Unmarshal(bodyCopy.Bytes(), &results); err != nil {
+		return results, fmt.Errorf("error decoding response body: %v", err)
+	}
+
+	return results, nil
 }

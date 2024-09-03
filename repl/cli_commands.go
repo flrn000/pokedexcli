@@ -12,7 +12,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	action      func(*Config) error
+	action      func(*Config, string) error
 }
 
 func getCLICommands() map[string]cliCommand {
@@ -37,10 +37,15 @@ func getCLICommands() map[string]cliCommand {
 			description: "Displays the names of the previous page of locations",
 			action:      commandMapB,
 		},
+		"explore": {
+			name:        "explore",
+			description: "Displays a list of all the Pokemon in a given area",
+			action:      commandExplore,
+		},
 	}
 }
 
-func commandHelp(cfg *Config) error {
+func commandHelp(cfg *Config, commandArg string) error {
 	io.WriteString(os.Stdout, "\nWelcome to the Pokedex!\nUsage:\n\n")
 
 	for _, command := range getCLICommands() {
@@ -50,12 +55,12 @@ func commandHelp(cfg *Config) error {
 	return nil
 }
 
-func commandExit(cfg *Config) error {
+func commandExit(cfg *Config, commandArg string) error {
 	os.Exit(0)
 	return nil
 }
 
-func commandMap(cfg *Config) error {
+func commandMap(cfg *Config, commandArg string) error {
 	data, err := service.GetLocationAreaData(cfg.nextPageURl)
 	if err != nil {
 		return err
@@ -71,7 +76,7 @@ func commandMap(cfg *Config) error {
 	return nil
 }
 
-func commandMapB(cfg *Config) error {
+func commandMapB(cfg *Config, commandArg string) error {
 	if cfg.previousPageURL == nil {
 		return errors.New("you are on the first page")
 	}
@@ -85,6 +90,25 @@ func commandMapB(cfg *Config) error {
 
 	for _, m := range data.Results {
 		fmt.Println(m.Name)
+	}
+
+	return nil
+}
+
+func commandExplore(cfg *Config, commandArg string) error {
+	if len(commandArg) == 0 {
+		return fmt.Errorf("no location area name provided")
+	}
+
+	data, err := service.Explore(commandArg)
+	if err != nil {
+		return err
+	}
+
+	io.WriteString(os.Stdout, fmt.Sprintf("Exploring %v...\nFound Pokemon:\n", commandArg))
+
+	for _, v := range data.PokemonEncounters {
+		fmt.Println("- ", v.Pokemon.Name)
 	}
 
 	return nil

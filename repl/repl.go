@@ -24,11 +24,29 @@ func Start(cfg *Config) {
 			log.Fatalf("error reading user input: %v", err)
 		}
 
-		text := utils.NormalizeInput(userInput.Text())
-		cliCommands := getCLICommands()
+		words := utils.NormalizeInput(userInput.Text())
+		if len(words) == 0 {
+			io.WriteString(os.Stdout, "\nPokedex > ")
 
-		if command, exists := cliCommands[text]; exists {
-			err := command.action(cfg)
+			continue
+		}
+		cliCommands := getCLICommands()
+		commandName := words[0]
+
+		if command, exists := cliCommands[commandName]; exists {
+			if commandName == "explore" && len(words) > 1 {
+				err := command.action(cfg, words[1])
+				if err != nil {
+					fmt.Println(err)
+					io.WriteString(os.Stdout, "\nPokedex > ")
+
+					continue
+				}
+
+				io.WriteString(os.Stdout, "\nPokedex > ")
+				continue
+			}
+			err := command.action(cfg, "")
 			if err != nil {
 				fmt.Println(err)
 				io.WriteString(os.Stdout, "\nPokedex > ")
@@ -36,7 +54,7 @@ func Start(cfg *Config) {
 				continue
 			}
 		} else {
-			io.WriteString(os.Stdout, fmt.Sprintf("unknown command: %s\n", text))
+			io.WriteString(os.Stdout, fmt.Sprintf("unknown command: %s\n", words))
 		}
 
 		io.WriteString(os.Stdout, "\nPokedex > ")
