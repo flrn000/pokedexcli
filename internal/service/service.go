@@ -92,3 +92,21 @@ func Explore(locationAreaName string) (Encounters, error) {
 
 	return results, nil
 }
+
+func Catch(pokemonName string) (PokemonInfo, error) {
+	apiURL := baseURL + "/pokemon/" + pokemonName
+
+	res, err := http.Get(apiURL)
+	if err != nil {
+		return PokemonInfo{}, fmt.Errorf("error fetching pokemon info %v", err)
+	}
+
+	defer res.Body.Close()
+
+	var data PokemonInfo
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+		return PokemonInfo{}, fmt.Errorf("error decoding response body %v", err)
+	}
+
+	return data, nil
+}

@@ -7,12 +7,15 @@ import (
 	"log"
 	"os"
 
+	"github.com/flrn000/pokedexcli/internal/service"
 	"github.com/flrn000/pokedexcli/internal/utils"
 )
 
 type Config struct {
 	nextPageURl, previousPageURL *string
 }
+
+var pokedex = make(map[string]service.PokemonInfo)
 
 func Start(cfg *Config) {
 	userInput := bufio.NewScanner(os.Stdin)
@@ -32,6 +35,7 @@ func Start(cfg *Config) {
 		}
 		cliCommands := getCLICommands()
 		commandName := words[0]
+
 		args := []string{}
 		if len(words) > 1 {
 			args = words[1:]

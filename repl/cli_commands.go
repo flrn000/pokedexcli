@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"os"
 
 	"github.com/flrn000/pokedexcli/internal/service"
@@ -41,6 +42,11 @@ func getCLICommands() map[string]cliCommand {
 			name:        "explore <location_name>",
 			description: "Displays a list of all the Pokemon in a given area",
 			action:      commandExplore,
+		},
+		"catch": {
+			name:        "catch <pokemon_name>",
+			description: "Catch a pokemon",
+			action:      commandCatch,
 		},
 	}
 }
@@ -112,4 +118,29 @@ func commandExplore(cfg *Config, args ...string) error {
 	}
 
 	return nil
+}
+
+func commandCatch(cfg *Config, args ...string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("no pokemon name provided")
+	}
+	pokemonName := args[0]
+
+	io.WriteString(os.Stdout, fmt.Sprintf("Throwing a Pokeball at %v...\n", pokemonName))
+	pokemonInfo, err := service.Catch(pokemonName)
+	if err != nil {
+		return err
+	}
+
+	catchChance := rand.IntN(pokemonInfo.BaseExperience)
+	catchThreshold := pokemonInfo.BaseExperience/2 + 10
+
+	if catchChance >= catchThreshold {
+		pokedex[pokemonName] = pokemonInfo
+		io.WriteString(os.Stdout, fmt.Sprintf("%v was caught!\n", pokemonName))
+		return nil
+	} else {
+		io.WriteString(os.Stdout, fmt.Sprintf("%v escaped!\n", pokemonName))
+		return nil
+	}
 }
