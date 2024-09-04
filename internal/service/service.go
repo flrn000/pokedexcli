@@ -93,8 +93,17 @@ func Explore(locationAreaName string) (Encounters, error) {
 	return results, nil
 }
 
-func Catch(pokemonName string) (PokemonInfo, error) {
+func GetPokemon(pokemonName string) (PokemonInfo, error) {
 	apiURL := baseURL + "/pokemon/" + pokemonName
+
+	if data, exists := responseCache.Get(apiURL); exists {
+		var results PokemonInfo
+		if err := json.Unmarshal(data, &results); err != nil {
+			return PokemonInfo{}, err
+		}
+
+		return results, nil
+	}
 
 	res, err := http.Get(apiURL)
 	if err != nil {
@@ -103,10 +112,17 @@ func Catch(pokemonName string) (PokemonInfo, error) {
 
 	defer res.Body.Close()
 
-	var data PokemonInfo
-	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return PokemonInfo{}, err
+	}
+
+	var result PokemonInfo
+	if err := json.Unmarshal(data, &result); err != nil {
 		return PokemonInfo{}, fmt.Errorf("error decoding response body %v", err)
 	}
 
-	return data, nil
+	responseCache.Add(apiURL, data)
+
+	return result, nil
 }

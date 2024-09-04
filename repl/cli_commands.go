@@ -126,8 +126,13 @@ func commandCatch(cfg *Config, args ...string) error {
 	}
 	pokemonName := args[0]
 
+	if _, exists := pokedex[pokemonName]; exists {
+		io.WriteString(os.Stdout, fmt.Sprintf("You've already caught %v!\n", pokemonName))
+		return nil
+	}
+
 	io.WriteString(os.Stdout, fmt.Sprintf("Throwing a Pokeball at %v...\n", pokemonName))
-	pokemonInfo, err := service.Catch(pokemonName)
+	pokemonInfo, err := service.GetPokemon(pokemonName)
 	if err != nil {
 		return err
 	}
