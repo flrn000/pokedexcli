@@ -48,6 +48,11 @@ func getCLICommands() map[string]cliCommand {
 			description: "Catch a pokemon",
 			action:      commandCatch,
 		},
+		"inspect": {
+			name:        "inspect <pokemon_name>",
+			description: "Inspect a pokemon",
+			action:      commandInspect,
+		},
 	}
 }
 
@@ -148,4 +153,34 @@ func commandCatch(cfg *Config, args ...string) error {
 		io.WriteString(os.Stdout, fmt.Sprintf("%v escaped!\n", pokemonName))
 		return nil
 	}
+}
+
+func commandInspect(cfg *Config, args ...string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("no pokemon name provided")
+	}
+	pokemonName := args[0]
+
+	pokemonInfo, exists := pokedex[pokemonName]
+	if !exists {
+		io.WriteString(os.Stdout, fmt.Sprintf("You haven't caught %v yet!\n", pokemonName))
+		return nil
+	}
+
+	fmt.Printf("Name: %v\n", pokemonInfo.Name)
+	fmt.Printf("Height: %v\n", pokemonInfo.Height)
+	fmt.Printf("Weight: %v\n", pokemonInfo.Weight)
+
+	fmt.Println("Stats:")
+
+	for _, v := range pokemonInfo.Stats {
+		fmt.Printf("-%v: %d\n", v.Stat.Name, v.BaseStat)
+	}
+
+	fmt.Println("Types:")
+	for _, v := range pokemonInfo.Types {
+		fmt.Printf("- %v\n", v.Type.Name)
+	}
+
+	return nil
 }
