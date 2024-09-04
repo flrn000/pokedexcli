@@ -12,7 +12,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	action      func(*Config, string) error
+	action      func(*Config, ...string) error
 }
 
 func getCLICommands() map[string]cliCommand {
@@ -38,14 +38,14 @@ func getCLICommands() map[string]cliCommand {
 			action:      commandMapB,
 		},
 		"explore": {
-			name:        "explore",
+			name:        "explore <location_name>",
 			description: "Displays a list of all the Pokemon in a given area",
 			action:      commandExplore,
 		},
 	}
 }
 
-func commandHelp(cfg *Config, commandArg string) error {
+func commandHelp(cfg *Config, args ...string) error {
 	io.WriteString(os.Stdout, "\nWelcome to the Pokedex!\nUsage:\n\n")
 
 	for _, command := range getCLICommands() {
@@ -55,12 +55,12 @@ func commandHelp(cfg *Config, commandArg string) error {
 	return nil
 }
 
-func commandExit(cfg *Config, commandArg string) error {
+func commandExit(cfg *Config, args ...string) error {
 	os.Exit(0)
 	return nil
 }
 
-func commandMap(cfg *Config, commandArg string) error {
+func commandMap(cfg *Config, args ...string) error {
 	data, err := service.GetLocationAreaData(cfg.nextPageURl)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func commandMap(cfg *Config, commandArg string) error {
 	return nil
 }
 
-func commandMapB(cfg *Config, commandArg string) error {
+func commandMapB(cfg *Config, args ...string) error {
 	if cfg.previousPageURL == nil {
 		return errors.New("you are on the first page")
 	}
@@ -95,17 +95,17 @@ func commandMapB(cfg *Config, commandArg string) error {
 	return nil
 }
 
-func commandExplore(cfg *Config, commandArg string) error {
-	if len(commandArg) == 0 {
+func commandExplore(cfg *Config, args ...string) error {
+	if len(args) == 0 {
 		return fmt.Errorf("no location area name provided")
 	}
 
-	data, err := service.Explore(commandArg)
+	data, err := service.Explore(args[0])
 	if err != nil {
 		return err
 	}
 
-	io.WriteString(os.Stdout, fmt.Sprintf("Exploring %v...\nFound Pokemon:\n", commandArg))
+	io.WriteString(os.Stdout, fmt.Sprintf("Exploring %v...\nFound Pokemon:\n", args[0]))
 
 	for _, v := range data.PokemonEncounters {
 		fmt.Println("- ", v.Pokemon.Name)

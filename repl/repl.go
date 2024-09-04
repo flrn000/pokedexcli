@@ -32,21 +32,13 @@ func Start(cfg *Config) {
 		}
 		cliCommands := getCLICommands()
 		commandName := words[0]
+		args := []string{}
+		if len(words) > 1 {
+			args = words[1:]
+		}
 
 		if command, exists := cliCommands[commandName]; exists {
-			if commandName == "explore" && len(words) > 1 {
-				err := command.action(cfg, words[1])
-				if err != nil {
-					fmt.Println(err)
-					io.WriteString(os.Stdout, "\nPokedex > ")
-
-					continue
-				}
-
-				io.WriteString(os.Stdout, "\nPokedex > ")
-				continue
-			}
-			err := command.action(cfg, "")
+			err := command.action(cfg, args...)
 			if err != nil {
 				fmt.Println(err)
 				io.WriteString(os.Stdout, "\nPokedex > ")
