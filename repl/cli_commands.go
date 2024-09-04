@@ -53,6 +53,11 @@ func getCLICommands() map[string]cliCommand {
 			description: "Inspect a pokemon",
 			action:      commandInspect,
 		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "Lists all the pokemon you have currently caught",
+			action:      commandPokedex,
+		},
 	}
 }
 
@@ -180,6 +185,20 @@ func commandInspect(cfg *Config, args ...string) error {
 	fmt.Println("Types:")
 	for _, v := range pokemonInfo.Types {
 		fmt.Printf("- %v\n", v.Type.Name)
+	}
+
+	return nil
+}
+
+func commandPokedex(cfg *Config, args ...string) error {
+	if len(pokedex) == 0 {
+		io.WriteString(os.Stdout, "You haven't caught any pokemon yet")
+		return nil
+	}
+
+	fmt.Println("Your Pokedex:")
+	for name := range pokedex {
+		fmt.Println("- ", name)
 	}
 
 	return nil
